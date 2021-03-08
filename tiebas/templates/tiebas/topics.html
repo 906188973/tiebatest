@@ -1,0 +1,55 @@
+{% extends "tiebas/base.html" %}
+{% block title %}用户登录{% endblock %}
+
+{% block css %}
+
+{% endblock %}
+
+
+    {% block content %}
+    <p>猎人吧</p>
+    <ul>
+        {% for topic in topics %}
+        <li>
+            {{ topic.floor_many }} -
+            <a href="{% url 'tiebas:topic' topic.id %}">{{topic}}</a> ——
+            {{ topic.owner }}
+        </li>
+        {% empty %}
+        <li>没有帖子请创建</li>
+        {% endfor %}
+    </ul>
+    <p>发表新贴</p>
+    <form action="{% url 'tiebas:topics' %}" method="post">
+        {% csrf_token %}
+        {{ form_topic.as_p }}
+        <br>
+        {{ form_poster.as_p }}
+        <button name="submit">发表</button>
+    </form>
+    <div>
+        <nav aria-label="Page navigation">
+          <ul class="pagination">
+            <li>
+              <a href="#" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+              </a>
+            </li>
+            <li><a href="#">1</a></li>
+            <li><a href="#">2</a></li>
+            <li><a href="#">3</a></li>
+            <li><a href="#">4</a></li>
+            <li><a href="#">5</a></li>
+            <li>
+              <a href="#" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+    </div>
+    {% endblock content %}
+
+{% block js %}
+
+{% endblock%}

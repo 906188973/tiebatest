@@ -1,0 +1,22 @@
+{% extends "tiebas/base.html" %}
+{% block title %}用户登录{% endblock %}
+
+{% block css %}
+
+{% endblock %}
+
+    {% block content %}
+
+    {% if form.errors %}
+    <p>密码错误再输入一次</p>
+    {% endif %}
+    <form method="post" action="{% url 'users:login' %}">
+        {% csrf_token %}
+        {{form.as_p}}
+        <button name="submit">登入</button>
+        <input type="hidden" name="next" value="{% url 'tiebas:index' %}" />
+    </form>
+    {% endblock content %}
+{% block js %}
+
+{% endblock%}

@@ -1,0 +1,165 @@
+{% extends "tiebas/base.html" %}
+{% block title %}用户登录{% endblock %}
+
+{% block css %}
+
+{% endblock %}
+
+    {% block content %}
+    <p>{{topic}}</p>
+    <ul>
+        {% for poster in posters %}
+        <li id="poster_{{ poster.id }}">
+            <p>{{poster.owner}} - </p>
+            <p>{{poster.text_poster|linebreaks}}</p>
+            <p id="reply_father">{{poster.floor}}楼&nbsp;&nbsp;&nbsp;{{poster.date_added|date:'Y-m-d H:i'}}&nbsp;&nbsp;&nbsp;
+                <a href="javascript:replyShow({{ poster.id }});">回复</a>
+                {% if poster.owner == request.user %}
+                <a href="javascript:posterDel({{ poster.id }});">删除</a>
+                {% endif %}</p>
+            <div id="reply_form_{{ poster.id }}" style="display:none">
+                <div id="reply_list_{{ poster.id }}">
+                {% for reply in poster.poster_reply_set.all %}
+                    <div id="reply_{{ reply.id }}">
+                        {% if reply.by_owner == Null %}
+                        <span>{{ reply.owner }}</span>
+                        {% else %}
+                        <span>{{ reply.owner }}:回复 {{ reply.by_owner }}</span>
+                        {% endif %}
+                        <span> ({{ reply.date_added|date:'Y-m-d H:i'}}):</span>
+                        <div>
+                            <span>{{ reply.text }}</span>
+                            <a href="javascript:reply({{ reply.id }});">回复</a>
+                            {% if reply.owner == request.user %}
+                            <a href="javascript:replyDel({{ reply.id }});">删除</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <form action="{% url 'tiebas:update_comment' %}" id="replyForm_{{ poster.id }}" method="post">
+                    {% csrf_token %}
+                    <textarea id="reply_text_{{ poster.id }}" name="reply_text"></textarea>
+                    <input type="hidden" id="poster_id_{{ poster.id }}" name="poster_id" value="{{ poster.id }}">
+                    <input type="hidden" id="reply_comment_{{ poster.id }}" class="reply_comment_id" name="reply_comment_id" value="0">
+<!--                    <input type="submit" id="replySubmit_{{ poster.id }}" value="发送">-->
+                    <button type="button" id="{{ poster.id }}" onclick="replySubmit({{ poster.id }})">发送</button>
+                </form>
+            </div>
+        </li>
+        {% empty %}
+        <li>没有回复</li>
+        {% endfor %}
+    </ul>
+    <p>发表回复</p>
+    <form action="{% url 'tiebas:topic' topic.id%}" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button name="submit">发表</button>
+    </form>
+    <div>
+        <nav aria-label="Page navigation">
+          <ul class="pagination">
+            <li>
+              <a href="#" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+              </a>
+            </li>
+            <li><a href="#">1</a></li>
+            <li><a href="#">2</a></li>
+            <li><a href="#">3</a></li>
+            <li><a href="#">4</a></li>
+            <li><a href="#">5</a></li>
+            <li>
+              <a href="#" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+    </div>
+    {% endblock %}
+
+{% block js %}
+<script>
+        $.ajaxSetup({
+            data:{csrfmiddlewaretoken:'{{ csrf_token }}'}
+        })
+    $(function(){
+
+  });
+    function replySubmit(id){
+        $.ajax({
+            url:"{% url 'tiebas:update_comment' %}",
+            type:"POST",
+            data:$('#replyForm_'+id).serialize(), //所以字段数据 + csrf token
+            dataType:"JSON",
+            success:function (res) {
+                if(res.status){
+                    if(res.owner_status){
+                        var comment_html = '<div id="reply_' + res.reply_id + '"><span>' + res.username +
+                                     ':回复' + res.by_owner + '</span><span> (' +
+                                     res.comment_time + '):</span><div><span>' + res.text +
+                                     '</span><a >回复</a><a href="javascript:replyDel(' +
+                                     res.reply_id + ');"> 删除</a></div></div>';
+                    }else{
+                        var comment_html = '<div id="reply_' + res.reply_id + '"><span>' + res.username + '</span><span> (' +
+                                     res.comment_time + '):</span><div><span>' + res.text +
+                                     '</span><a >回复</a><a href="javascript:replyDel(' +
+                                     res.reply_id + ');"> 删除</a></div></div>';
+                        }
+                    $("#reply_list_"+id).append(comment_html);
+                }else{
+                       console.log('error');
+                }
+            }
+        })
+        $('#reply_text_'+id).val('');
+    }
+    function reply(reply_comment_id){
+            // 设置值
+            $('.reply_comment_id').val(reply_comment_id);
+        }
+    function replyShow(id){
+            // 设置值
+            $('#reply_comment_id').val(id);
+            $("#reply_form_"+id).toggle();
+            $('.reply_comment_id').val(0);
+        }
+
+
+        function posterDel(id) {
+            var flag = confirm("您真的确定要删除吗？")
+            if (flag) {
+                var pk = id
+                var url = '/poster_del/' + pk + '/'
+                $.ajax({
+                    url: url,
+                    type: "POST",
+                    success: function (res) {
+                        if(res.status){
+                        $('#poster_'+id).remove()
+                        }
+                    }
+                })
+            }
+        }
+        function replyDel(id) {
+            var flag = confirm("您确定要删除您的回复吗？")
+            if (flag) {
+                var pk = id
+                var url = '/reply_del/' + pk + '/'
+                $.ajax({
+                    url: url,
+                    type: "POST",
+                    success: function (res) {
+                        if(res.status){
+                        $('#reply_'+id).remove()
+                        }
+                    }
+                })
+            }
+        }
+
+</script>
+{% endblock %}
